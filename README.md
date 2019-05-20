@@ -1,48 +1,29 @@
 package com.company;
 
-import java.util.Optional;
+import java.util.ArrayDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
 
-    static boolean goodBrackets = false;
-    static boolean round = false;
-    static boolean square = false;
-    static boolean curly = false;
-
     public static void main(String[] args) {
-        // The task is to check the hierarchy of the brackets and to check if every open bracket is closed
-        //  - only () can be inside ()
-        //  - only [] and () can be inside []
-        //  - all can be inside {}
-
-        String textTrue = "This is {some (text), nq[ma ](kakvo na maika ti putkata) [da kaja] za vas}";
-        String textFalse = "This is {some (text), nqma ([kakvo] na maika ti putkata) da kaja ( za vas) }";
-        String textFalse2 = "This is {some (text), nqma ([kakvo] na maika ti putkata) da kaja ( za [] vas) }";
-        String textFalse3 = "This is {some (text), nqma ([kakvo] na maika ti putkata) da kaja ( za {} vas) }";
-        String textFalse4 = "This is {some (text), nqma ([ka{}kvo] na maika ti putkata) da kaja ( za vas) }";
-        String noBrackets = "this is some motherfucking text bitch";
+        String textTrue = "This is {some (text), nq[ma ](kakvo na 890 ti ,l;';') [da ;l'l'] za vas}";
+        String textFalse = "Tdfhhis is {some (texghft),123 nqma ([kakvo]gh na asdsad ti dasd) r6r kaja ( za bvcws) }";
+        String textFalse2 = "This asdgfis {some (texfght), nfgnqma ([kkakvo] na asd678sadsdf ti erfgdfgdfgd df) da fgh ( za [] vas) }";
+        String textFalse3 = "This isds {some (text), .,/789 ([kakvo]mbv na asdasd ti asdasd) da asdasd ( za {} asdasd) }";
+        String textFalse4 = "This is {some (textsas), nqma ([ka{}kvo] nvbnvba dfvdfg ti dfgdfg) da kaja ( za vas) }";
+        String noBrackets = "this is some jklkjljklj jkljkljkl jkl43234assd"; 
 
         String[] test = new String[]{
                 textTrue, textFalse, textFalse2, textFalse3, textFalse4, noBrackets
         };
 
         for (int i = 0; i < test.length; i++) {
-            curly = false;
-            square = false;
-            round = false;
-            goodBrackets = false;
-            CheckBrackets(test[i]);
-            if (curly && square && round) {
-                goodBrackets = true;
-            }
-            System.out.println(goodBrackets);
+            System.out.println(CheckBrackets(test[i]));
         }
-
     }
 
-    private static void CheckBrackets(String textTrue) {
+    private static boolean CheckBrackets(String textTrue) {
         String bracketsRegex = "(?<openingRound>[\\(])?(?<closingRound>[\\)])?(?<openingSquare>[\\[])?(?<closingSquare>[\\]])?(?<openingCurly>[\\{])?(?<closingCurly>[\\}])?";
 
         Pattern pattern = Pattern.compile(bracketsRegex);
@@ -50,89 +31,52 @@ public class Main {
 
         StringBuilder sb = new StringBuilder();
 
-        int openRound = 0;
-        int closeRound = 0;
-        int openSquare = 0;
-        int closeSquare = 0;
-        int openCurly = 0;
-        int closeCurly = 0;
-
         while (matcher.find()) {
             if (!(matcher.group("openingRound") == null)) {
                 sb.append(matcher.group("openingRound"));
-                openRound++;
             } else if (!(matcher.group("closingRound") == null)) {
                 sb.append(matcher.group("closingRound"));
-                closeRound++;
             } else if (!(matcher.group("openingSquare") == null)) {
                 sb.append(matcher.group("openingSquare"));
-                openSquare++;
             } else if (!(matcher.group("closingSquare") == null)) {
                 sb.append(matcher.group("closingSquare"));
-                closeSquare++;
             } else if (!(matcher.group("openingCurly") == null)) {
                 sb.append(matcher.group("openingCurly"));
-                openCurly++;
             } else if (!(matcher.group("closingCurly") == null)) {
                 sb.append(matcher.group("closingCurly"));
-                closeCurly++;
             }
         }
+        boolean isValid = true;
+        if (sb.length() % 2 != 0) {
+            isValid = false;
+        }
+        String brackets = sb.toString();
+        
+        ArrayDeque<Character> stack = new ArrayDeque<>();
 
-        if (openRound == closeRound && openSquare == closeSquare && openCurly == closeCurly) {
-            if (openCurly == 0) curly = true;
-            if (openSquare == 0) square = true;
-            if (openRound == 0) round = true;
+        for (int i = 0; i < brackets.length(); i++) {
+            char current = brackets.charAt(i);
 
-            if (curly && square && round) {
-                goodBrackets = true;
-                return;
+            if (current == '[' || current == '{' || current == '(') {
+                stack.push(current);
+            } else {
+                if (stack.isEmpty()) {
+                    isValid = false;
+                    break;
+                }
+                char topChar = stack.pop();
+                if (current == ']' && topChar != '[') {
+                    isValid = false;
+                    break;
+                } else if (current == '}' && topChar != '{') {
+                    isValid = false;
+                    break;
+                } else if (current == ')' && topChar != '(') {
+                    isValid = false;
+                    break;
+                }
             }
-            CheckInside(sb, 0);
-
         }
-
-    }
-
-    private static void CheckInside(StringBuilder sb, int i) {
-        char charI = sb.charAt(i);
-        if (sb.length() == 2) i = 0;
-        /* char charIPlus = sb.charAt(i + 1);*/
-        switch (sb.charAt(i)) {
-            case '(':
-                if (sb.charAt(i + 1) == '(') CheckInside(sb, i + 1);
-                else if (sb.charAt(i + 1) == ')') {
-                    sb.deleteCharAt(i);
-                    sb.deleteCharAt(i);
-                    if (sb.length() > 0) {
-                        CheckInside(sb, i);
-                    }
-                    round = true;
-                } else round = false;
-                break;
-            case '[':
-                if (sb.charAt(i + 1) == '[' || sb.charAt(i + 1) == '(') CheckInside(sb, i + 1);
-                else if (sb.charAt(i + 1) == ']') {
-                    square = true;
-                    sb.deleteCharAt(i);
-                    sb.deleteCharAt(i);
-                    if (sb.length() > 0) {
-                        CheckInside(sb, i);
-                    }
-                } else square = false;
-                break;
-            case '{':
-                if (sb.charAt(i + 1) == '{' || sb.charAt(i + 1) == '[' || sb.charAt(i + 1) == '(')
-                    CheckInside(sb, i + 1);
-                else if (sb.charAt(i + 1) == '}') {
-                    curly = true;
-                    sb.deleteCharAt(i);
-                    sb.deleteCharAt(i);
-                    if (sb.length() > 0) {
-                        CheckInside(sb, i);
-                    }
-                } else curly = false;
-                break;
-        }
+        return isValid;
     }
 }
